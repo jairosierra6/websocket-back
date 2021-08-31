@@ -38,7 +38,7 @@ const removeUser = async (disconnectedUser) => {
         eventData.users.S = eventData.users.S.slice(1); // cleanup
     }
     let filteredUsers = JSON.parse(`[${eventData.users.S}]`);
-    let originalUsers = filteredUsers;
+    let originalUsers = filteredUsers.map( x => x.connectionId);
     filteredUsers = filteredUsers.filter( x => x.connectionId != disconnectedUser.connectionId);
     filteredUsers = JSON.stringify(filteredUsers)
     filteredUsers = filteredUsers.slice(1,-1); //remove annoying brackets
@@ -52,8 +52,9 @@ const removeUser = async (disconnectedUser) => {
             'eventName': (eventData.eventName) ? eventData.eventName : 'No name set',
         }
     };
-    let payload = {name: 'disconnectedUser', data: { "roomId": `${disconnectedUser.roomId}`, "connectionId": `${disconnectedUser.connectionId}`, "name": `${disconnectedUser.name}`, "id": `${disconnectedUser.id}`}};
-    
+    let payload = {name: 'disconnectedUser', data: { "roomId": disconnectedUser.roomId, "connectionId": disconnectedUser.connectionId}};
+    payload = JSON.stringify(payload);
+    console.log('ORIGINALL ', originalUsers);
     await ddb.putItem(params).promise();
     await sendToAll(originalUsers, payload);
 }
@@ -242,4 +243,3 @@ exports.handler = async (event) => {
     };
     return response;
 };
-
