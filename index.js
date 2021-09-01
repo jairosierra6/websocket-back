@@ -211,11 +211,12 @@ exports.handler = async (event) => {
                     console.log('disconnectedUser CHIVVVV ', disconnectedUser);
                     await removeUser(disconnectedUser);
                 }
-                if (body.action == "changedData" || body.action == "location") {
+                if (body.action == "changedData" || body.action == "locatedOn") {
                     let usersToNotify = await getUsersByRoom(body.roomId);
                     usersToNotify = usersToNotify.map( x => x.connectionId);
                     usersToNotify = usersToNotify.filter( x => x !== connectionId);
                     body.name = body.action;
+                    body.connectionId = connectionId;
                     await sendToAll(usersToNotify, body);
                 }
                 //await getEvent(body);
