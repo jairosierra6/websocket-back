@@ -31,6 +31,15 @@ const getEvents = async () => {
     return query.Items;
 }
 
+const getUsersByRoom = async (roomId) => {
+    let eventData = await getEvent(roomId);
+    if (eventData.users.S.charAt(0)== ',') {
+        eventData.users.S = eventData.users.S.slice(1); // cleanup
+    }
+    let parsedUsers = JSON.parse(`[${eventData.users.S}]`);
+    return parsedUsers;
+}
+
 const removeUser = async (disconnectedUser) => {
     let eventData = await getEvent(disconnectedUser.roomId);
     console.log('BEFORE', eventData.users.S);
@@ -53,7 +62,7 @@ const removeUser = async (disconnectedUser) => {
         }
     };
     let payload = {name: 'disconnectedUser', data: { "roomId": disconnectedUser.roomId, "connectionId": disconnectedUser.connectionId}};
-    payload = JSON.stringify(payload);
+    //payload = JSON.stringify(payload);
     console.log('ORIGINALL ', originalUsers);
     await ddb.putItem(params).promise();
     await sendToAll(originalUsers, payload);
@@ -201,6 +210,12 @@ exports.handler = async (event) => {
                     const disconnectedUser = usersInEvents.find( x => x.connectionId == connectionId );
                     console.log('disconnectedUser CHIVVVV ', disconnectedUser);
                     await removeUser(disconnectedUser);
+                }
+                if (body.action == "changedData") {
+                    let usersToNotify = await getUsersByRoom(body.roomId);
+                    usersToNotify = usersToNotify.map( x => x.connectionId);
+                    body.name = "changedData";
+                    await sendToAll(usersToNotify, body);
                 }
                 //await getEvent(body);
                 // await sendToAll(Object.keys(events), { systemMessage:`{from: ${events[connectionId]}, Body:${event.body}}`});
